@@ -11,12 +11,13 @@ def shop_trip() -> None:
     with open(config_path, "r") as file:
         config = json.load(file)
 
-    for customer in config["customers"]:
-        print(Customer(
-            customer,
-            Shop(config["shops"]),
-            config["FUEL_PRICE"]).return_()
-        )
+    customers_data = config["customers"]
+    shops = Shop(config["shops"])
+    fuel_price = config["FUEL_PRICE"]
+
+    customers = Customer(customers_data, shops, fuel_price)
+    for customer in customers:
+        print(customer.return_())
 
 
 if __name__ == "__main__":
