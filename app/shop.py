@@ -1,36 +1,50 @@
 from decimal import Decimal
+from math import sqrt
+
 from app.car import Car
 
 
 class Shop:
-    shops_list = []
+    def __init__(self, name: str, products: dict, location: tuple) -> None:
+        self.name = name
+        self.products = products
+        self.location = location
 
-    def __init__(self, shops: list) -> None:
-        for shop in shops:
-            self.shops_list.append(shop)
+    def cost_for_products(self, product_cart: dict) -> Decimal:
+        total = Decimal("0.00")
+        for product, quantity in product_cart.items():
+            if product in self.products:
+                total += Decimal(quantity) * Decimal(self.products[product])
+        return total
 
-    def cost_for_products_in_every_store(self, product_cart: dict) -> dict:
-        sum_total = {}
-        for shop in self.shops_list:
-            sum_ = Decimal("0.00")
-            for product, quantity in product_cart.items():
-                if product in shop["products"]:
-                    sum_ += Decimal(
-                        quantity) * Decimal(shop["products"][product])
-            sum_total[shop["name"]] = sum_
-        return sum_total
+    @staticmethod
+    def cost_of_fuel(
+            location: tuple,
+            shop_location: tuple,
+            car: Car
+    ) -> Decimal:
+        distance = Decimal(sqrt((shop_location[0] - location[0])
+                                ** 2 + (shop_location[1] - location[1]) ** 2))
+        amount_of_liters_per_distance = (distance * car.consumption
+                                         / Decimal("100"))
+        return amount_of_liters_per_distance * car.fuel_price * Decimal("2")
 
-    def total_cost(
-            self,
+    @staticmethod
+    def total_cost_for_every_shop(
+            shops: list,
             product_cart: dict,
             location: tuple,
             car: Car
     ) -> dict:
-        cost_of_products = self.cost_for_products_in_every_store(product_cart)
-        cost_of_fuel = car.cost_of_fuel(location, self.shops_list)
         full_cost_every_shop = {}
-        for name_shop, cash in cost_of_products.items():
-            if name_shop in cost_of_fuel.keys():
-                full_cost_every_shop[name_shop] = (cash
-                                                   + cost_of_fuel[name_shop])
+        for shop_data in shops:
+            shop = Shop(**shop_data)
+            product_cost = shop.cost_for_products(product_cart)
+            fuel_cost = Shop.cost_of_fuel(location, shop.location, car)
+            full_cost_every_shop[shop.name] = product_cost + fuel_cost
         return full_cost_every_shop
+
+    @staticmethod
+    def get_shop_by_name(shops: list, shop_name: str) -> None:
+        return next(
+            (shop for shop in shops if shop["name"] == shop_name), None)
